@@ -26,6 +26,10 @@ do_load_ath10k_board_bin() {
             dd if=${mtdblock} of=${cal_data_path}/wifi0.caldata bs=32 count=377 skip=128
             dd if=${mtdblock} of=${cal_data_path}/wifi1.caldata bs=32 count=377 skip=640
         ;;
+        cloud_core_repeater_v1)
+	    mkdir -p ${cal_data_path}
+            dd if=${mtdblock} of=${cal_data_path}/wifi0.caldata bs=32 count=377 skip=128
+		;;
         *)
             echo "Support to copy caldata is not there for $board"
         ;;

@@ -24,7 +24,7 @@
 
 struct squashfs_super_block {
 	__le32 s_magic;
-	__le32 pad0[9];
+	__le32 pad0[6];
 	__le64 bytes_used;
 };
 

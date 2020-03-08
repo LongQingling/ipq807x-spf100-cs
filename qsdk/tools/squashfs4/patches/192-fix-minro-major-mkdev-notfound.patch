@@ -1,0 +1,44 @@
+--- a/squashfs-tools/mksquashfs.c
++++ b/squashfs-tools/mksquashfs.c
+@@ -1369,8 +1369,8 @@ int create_inode(squashfs_inode *i_no, s
+ 	}
+ 	else if(type == SQUASHFS_CHRDEV_TYPE || type == SQUASHFS_BLKDEV_TYPE) {
+ 		struct squashfs_dev_inode_header *dev = &inode_header.dev;
+-		unsigned int major = major(buf->st_rdev);
+-		unsigned int minor = minor(buf->st_rdev);
++		unsigned int major = gnu_dev_major(buf->st_rdev);
++		unsigned int minor = gnu_dev_minor(buf->st_rdev);
+ 
+ 		if(major > 0xfff) {
+ 			ERROR("Major %d out of range in device node %s, "
+@@ -1393,8 +1393,8 @@ int create_inode(squashfs_inode *i_no, s
+ 	}
+ 	else if(type == SQUASHFS_LCHRDEV_TYPE || type == SQUASHFS_LBLKDEV_TYPE) {
+ 		struct squashfs_ldev_inode_header *dev = &inode_header.ldev;
+-		unsigned int major = major(buf->st_rdev);
+-		unsigned int minor = minor(buf->st_rdev);
++		unsigned int major = gnu_dev_major(buf->st_rdev);
++		unsigned int minor = gnu_dev_minor(buf->st_rdev);
+ 
+ 		if(major > 0xfff) {
+ 			ERROR("Major %d out of range in device node %s, "
+@@ -3793,7 +3793,7 @@ struct dir_info *dir_scan2(struct dir_in
+ 		buf.st_mode = pseudo_ent->dev->mode;
+ 		buf.st_uid = pseudo_ent->dev->uid;
+ 		buf.st_gid = pseudo_ent->dev->gid;
+-		buf.st_rdev = makedev(pseudo_ent->dev->major,
++		buf.st_rdev = gnu_dev_makedev(pseudo_ent->dev->major,
+ 			pseudo_ent->dev->minor);
+ 		buf.st_mtime = time(NULL);
+ 		buf.st_ino = pseudo_ino ++;
+--- a/squashfs-tools/unsquashfs.c
++++ b/squashfs-tools/unsquashfs.c
+@@ -936,7 +936,7 @@ int create_inode(char *pathname, struct
+ 					unlink(pathname);
+ 
+ 				if(mknod(pathname, chrdev ? S_IFCHR : S_IFBLK,
+-						makedev((i->data >> 8) & 0xff,
++						gnu_dev_makedev((i->data >> 8) & 0xff,
+ 						i->data & 0xff)) == -1) {
+ 					ERROR("create_inode: failed to create "
+ 						"%s device %s, because %s\n",

@@ -24,7 +24,7 @@ ifneq ($(CONFIG_PACKAGE_kmod-b43)$(CONFIG_PACKAGE_kmod-b43legacy)$(CONFIG_BRCMSM
 endif
 
 tools-$(BUILD_TOOLCHAIN) += gmp mpfr mpc libelf
-tools-y += m4 libtool autoconf automake flex bison pkg-config sed mklibs
+tools-y += m4 libtool autoconf automake flex bison pkg-config sed mklibs zlib
 tools-y += sstrip make-ext4fs e2fsprogs mtd-utils mkimage
 tools-y += firmware-utils patch-image patch quilt yaffs2 flock padjffs2
 tools-y += mm-macros missing-macros xz cmake scons bc findutils gengetopt patchelf
@@ -33,13 +33,13 @@ tools-$(CONFIG_powerpc) += upx
 tools-$(CONFIG_TARGET_x86) += qemu
 tools-$(CONFIG_TARGET_mxs) += elftosb
 tools-$(CONFIG_TARGET_brcm2708)$(CONFIG_TARGET_sunxi)$(CONFIG_TARGET_mxs) += mtools dosfstools
-tools-$(CONFIG_TARGET_ar71xx) += lzma-old squashfs
+# tools-$(CONFIG_TARGET_ar71xx) += lzma-old squashfs
 tools-$(CONFIG_TARGET_ipq806x)$(CONFIG_TARGET_ipq) += ramdump-parser
 tools-y += lzma squashfs4
 tools-$(BUILD_B43_TOOLS) += b43-tools
 tools-$(BUILD_PPL_CLOOG) += ppl cloog
 tools-$(CONFIG_USE_SPARSE) += sparse
-tools-y += coccinelle
+# tools-y += coccinelle
 
 # builddir dependencies
 $(curdir)/bison/compile := $(curdir)/flex/install
@@ -56,7 +56,7 @@ $(curdir)/mpc/compile := $(curdir)/mpfr/install $(curdir)/gmp/install
 $(curdir)/mpfr/compile := $(curdir)/gmp/install
 $(curdir)/ppl/compile := $(curdir)/gmp/install
 $(curdir)/cloog/compile := $(curdir)/ppl/install
-$(curdir)/mtd-utils/compile := $(curdir)/e2fsprogs/install $(curdir)/xz/install
+$(curdir)/mtd-utils/compile := $(curdir)/e2fsprogs/install $(curdir)/xz/install $(curdir)/zlib/install
 $(curdir)/mkimage/compile := $(curdir)/sed/install
 $(curdir)/mklibs/compile := $(curdir)/libtool/install
 $(curdir)/qemu/compile := $(curdir)/e2fsprogs/install
@@ -73,6 +73,8 @@ $(curdir)/bc/compile := $(curdir)/bison/install
 $(curdir)/findutils/compile := $(curdir)/bison/install
 $(curdir)/gengetopt/compile := $(curdir)/libtool/install
 $(curdir)/patchelf/compile := $(curdir)/libtool/install
+$(curdir)/zlib/compile := $(curdir)/cmake/compile
+$(curdir)/make-ext4fs/compile := $(curdir)/zlib/compile
 
 ifneq ($(CONFIG_CCACHE)$(CONFIG_SDK),)
 $(foreach tool, $(filter-out patch,$(tools-y)), $(eval $(curdir)/$(tool)/compile += $(curdir)/ccache/install))

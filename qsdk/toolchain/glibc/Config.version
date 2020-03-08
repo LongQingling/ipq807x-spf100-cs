@@ -13,8 +13,3 @@ config GLIBC_VERSION_2_21
 	bool
 
 endif
-
-menu "eglibc configuration"
-	depends on !TOOLCHAINOPTS && USE_GLIBC
-	source toolchain/glibc/config/Config.in
-endmenu

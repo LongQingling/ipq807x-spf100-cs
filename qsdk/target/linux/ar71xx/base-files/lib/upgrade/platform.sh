@@ -491,6 +491,9 @@ platform_check_image() {
 		platform_check_image_ioe "$1" && return 0
 		return 1
 		;;
+	cloud_core_repeater_v1)
+		return 0
+	;;
 	esac
 
 	echo "Sysupgrade is not yet supported on $board."

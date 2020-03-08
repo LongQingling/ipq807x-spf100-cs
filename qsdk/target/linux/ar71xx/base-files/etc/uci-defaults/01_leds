@@ -15,6 +15,10 @@ airgateway)
 alfa-nx)
 	ucidef_set_led_netdev "wan" "WAN" "alfa:green:led_2" "eth0"
 	ucidef_set_led_netdev "lan" "LAN" "alfa:green:led_3" "eth1"
+	;;\
+
+cloud_core_repeater_v1)
+	ucidef_set_led_netdev "internet" "INTERNET" "internet" "wifi01"
 	;;
 
 all0258n)

@@ -2070,6 +2070,8 @@ $(eval $(call SingleProfile,AthDTBLzma,64k,APJET01_DUAL_NOR_DTB,apjet01-dual-nor
 $(eval $(call SingleProfile,AthDTBLzma,64k,DB120_8M_DTB,db120-8M,,,,,RKuImage,1507328,$(AR71XX_8M_ROOTFS_SIZE),ath79_db120_8M))
 $(eval $(call SingleProfile,AthDTBLzma,64k,DB120_16M_DTB,db120-16M,,,,,RKuImage,1507328,$(AR71XX_16M_ROOTFS_SIZE),ath79_db120))
 
+$(eval $(call SingleProfile,AthDTBLzma,64k,CLOUD_CORE_QCA953X_REPEATER_V1_DTB,Cloud_Core_953x_repeater_v1,,,,,RKuImage,1507328,$(AR71XX_16M_ROOTFS_SIZE),ath79_qca9531_repeater_v1))
+
 $(eval $(call SingleProfile,Belkin,64k,F9K1115V2,f9k1115v2,F9K1115V2,ttyS0,115200,$$(f9k1115v2_mtdlayout),BR-6679BAC))
 
 $(eval $(call SingleProfile,CameoAP91,64kraw,DIR600A1,dir-600-a1,DIR-600-A1,ttyS0,115200,"AP91-AR7240-RT-090223-00"))
@@ -2362,6 +2364,10 @@ endef
 define Image/Build/Profile/QSDK_Target_Router
 	$(call Image/Build/Profile/AP135,$(1))
 	make -C $(TOPDIR) package/qca-romboot/compile
+endef
+
+define Image/Build/Profile/Cloud_Core_953x_repeater_v1
+	$(call Image/Build/Profile/CLOUD_CORE_QCA953X_REPEATER_V1_DTB,$(1))
 endef
 
 # $(1): filesystem type.

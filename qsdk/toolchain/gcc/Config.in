@@ -17,7 +17,17 @@ choice
 
 	config GCC_USE_VERSION_5
 		select GCC_VERSION_5
-		bool "gcc 5.x"
+		bool "gcc 5.5.0"
+		depends on !arc
+
+	config GCC_USE_VERSION_7
+		bool "gcc 7.3.0"
+		depends on !arc
+
+	config GCC_USE_VERSION_7_1_ARC
+		select GCC_VERSION_7_1_ARC
+		bool "gcc 7.1.x with support of ARC cores"
+		depends on arc
 
 endchoice
 
@@ -68,3 +78,11 @@ config INSTALL_GFORTRAN
 	default n
 	help
 	    Build/install GNU fortran compiler ?
+
+config INSTALL_GCCGO
+	bool
+	prompt "Build/install Go compiler?" if TOOLCHAINOPTS
+	depends on USE_GLIBC || USE_UCLIBC || BROKEN
+	default n
+	help
+	   Build/install GNU gccgo compiler ?

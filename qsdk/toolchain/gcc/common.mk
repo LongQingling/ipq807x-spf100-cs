@@ -20,6 +20,13 @@
 
 include $(TOPDIR)/rules.mk
 
+OS:=$(shell cat /etc/issue)
+ifeq ($(OS_VER),)
+OS_VER:=$(findstring Debian,$(OS))
+endif
+ifeq ($(OS_VER),)
+OS_VER:=$(findstring Deepin,$(OS))
+endif
 PKG_NAME:=gcc
 GCC_VERSION:=$(call qstrip,$(CONFIG_GCC_VERSION))
 PKG_VERSION:=$(firstword $(subst +, ,$(GCC_VERSION)))
@@ -51,16 +58,25 @@ ifeq ($(findstring linaro, $(CONFIG_GCC_VERSION)),linaro)
     HOST_BUILD_DIR:=$(BUILD_DIR_TOOLCHAIN)/$(GCC_DIR)
 else
   PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
-  PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 
-  ifeq ($(PKG_VERSION),4.6.3)
+  ifeq ($(GCC_VERSION),4.6.3)
+    PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
     PKG_MD5SUM:=773092fe5194353b02bb0110052a972e
   endif
-  ifeq ($(PKG_VERSION),4.8.0)
+
+  ifeq ($(GCC_VERSION),4.8.0)
+    PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
     PKG_MD5SUM:=e6040024eb9e761c3bea348d1fa5abb0
   endif
-  ifeq ($(PKG_VERSION),5.2.0)
-    PKG_MD5SUM:=a51bcfeb3da7dd4c623e27207ed43467
+
+  ifeq ($(GCC_VERSION),5.5.0)
+    PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+    PKG_MD5SUM:=781bc0195edeb0ceaace8428f63ae63d
+  endif
+
+  ifeq ($(GCC_VERSION),7.3.0)
+    PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+    PKG_MD5SUM:=747d5010b7c6938b480bc6e4d7c4be9a
   endif
 endif
 
@@ -91,11 +107,15 @@ HOST_STAMP_CONFIGURED:=$(GCC_BUILD_DIR)/.configured
 HOST_STAMP_INSTALLED:=$(STAGING_DIR_HOST)/stamp/.gcc_$(GCC_VARIANT)_installed
 
 SEP:=,
-TARGET_LANGUAGES:="c,c++$(if $(CONFIG_INSTALL_LIBGCJ),$(SEP)java)$(if $(CONFIG_INSTALL_GFORTRAN),$(SEP)fortran)"
+TARGET_LANGUAGES:="c,c++$(if $(CONFIG_INSTALL_LIBGCJ),$(SEP)java)$(if $(CONFIG_INSTALL_GCCGO),$(SEP)go)$(if $(CONFIG_INSTALL_GFORTRAN),$(SEP)fortran)"
 
 export libgcc_cv_fixed_point=no
 ifdef CONFIG_USE_UCLIBC
   export glibcxx_cv_c99_math_tr1=no
+endif
+
+ifdef CONFIG_INSTALL_GCCGO
+  export libgo_cv_c_split_stack_supported=no
 endif
 
 GCC_CONFIGURE:= \
@@ -116,6 +136,7 @@ GCC_CONFIGURE:= \
 		--disable-libgomp \
 		--disable-libmudflap \
 		--disable-multilib \
+		--disable-libmpx \
 		--disable-nls \
 		$(GRAPHITE_CONFIGURE) \
 		--with-host-libstdcxx=-lstdc++ \
@@ -123,12 +144,32 @@ GCC_CONFIGURE:= \
 		$(call qstrip,$(CONFIG_EXTRA_GCC_CONFIG_OPTIONS)) \
 		$(if $(CONFIG_mips64)$(CONFIG_mips64el),--with-arch=mips64 \
 			--with-abi=$(subst ",,$(CONFIG_MIPS64_ABI))) \
-		--with-gmp=$(TOPDIR)/staging_dir/host \
-		--with-mpfr=$(TOPDIR)/staging_dir/host \
-		--with-mpc=$(TOPDIR)/staging_dir/host \
-		--disable-decimal-float
+		$(if $(CONFIG_arc),--with-cpu=$(CONFIG_CPU_TYPE)) \
+		--disable-decimal-float 
+
+ifeq ($(OS_VER),Debian)
+  GCC_CONFIGURE += --with-gmp=$(TOPDIR)/staging_dir/host 
+  GCC_CONFIGURE += --with-mpfr=$(TOPDIR)/staging_dir/host
+  GCC_CONFIGURE += --with-mpc=$(TOPDIR)/staging_dir/host
+endif
+
+ifeq ($(OS_VER),Deepin)
+  GCC_CONFIGURE +=  --with-gmp=$(STAGING_DIR_HOST)/lib
+  GCC_CONFIGURE +=  --with-mpfr=$(STAGING_DIR_HOST)/lib
+  GCC_CONFIGURE +=	--with-mpc=$(STAGING_DIR_HOST)/lib
+endif
+
 ifneq ($(CONFIG_mips)$(CONFIG_mipsel),)
   GCC_CONFIGURE += --with-mips-plt
+endif
+
+ifndef GCC_VERSION_4_8
+  GCC_CONFIGURE += --with-diagnostics-color=auto-if-env
+endif
+
+ifndef ($(CONFIG_GCC_DEFAULT_PIE),)
+  GCC_CONFIGURE+= \
+		--enable-default-pie
 endif
 
 ifneq ($(CONFIG_SSP_SUPPORT),)
@@ -170,16 +211,42 @@ ifneq ($(CONFIG_SOFT_FLOAT),y)
   endif
 endif
 
+ifeq ($(CONFIG_TARGET_x86)$(CONFIG_USE_GLIBC)$(CONFIG_INSTALL_GCCGO),yyy)
+  TARGET_CFLAGS+=-fno-split-stack
+endif
+
 GCC_MAKE:= \
 	export SHELL="$(BASH)"; \
 	$(MAKE) \
 		CFLAGS="$(HOST_CFLAGS)" \
 		CFLAGS_FOR_TARGET="$(TARGET_CFLAGS)" \
-		CXXFLAGS_FOR_TARGET="$(TARGET_CFLAGS)"
+		CXXFLAGS_FOR_TARGET="$(TARGET_CFLAGS)" \
+		GOCFLAGS_FOR_TARGET="$(TARGET_CFLAGS)"
 
-define Host/Prepare
-	mkdir -p $(GCC_BUILD_DIR)
+define Host/SetToolchainInfo
+	$(SED) 's,TARGET_CROSS=.*,TARGET_CROSS=$(REAL_GNU_TARGET_NAME)-,' $(TOOLCHAIN_DIR)/info.mk
+	$(SED) 's,GCC_VERSION=.*,GCC_VERSION=$(GCC_VERSION),' $(TOOLCHAIN_DIR)/info.mk
 endef
+
+ifneq ($(GCC_PREPARE),)
+  define Host/Prepare
+	$(call Host/SetToolchainInfo)
+	$(call Host/Prepare/Default)
+	ln -snf $(GCC_DIR) $(BUILD_DIR_TOOLCHAIN)/$(PKG_NAME)
+	$(CP) $(SCRIPT_DIR)/config.{guess,sub} $(HOST_SOURCE_DIR)/
+	$(SED) 's,^MULTILIB_OSDIRNAMES,# MULTILIB_OSDIRNAMES,' $(HOST_SOURCE_DIR)/gcc/config/*/t-*
+	$(SED) 'd' $(HOST_SOURCE_DIR)/gcc/DEV-PHASE
+	$(SED) 's, DATESTAMP,,' $(HOST_SOURCE_DIR)/gcc/version.c
+	#(cd $(HOST_SOURCE_DIR)/libstdc++-v3; autoconf;);
+	$(SED) 's,gcc_no_link=yes,gcc_no_link=no,' $(HOST_SOURCE_DIR)/libstdc++-v3/configure
+	mkdir -p $(GCC_BUILD_DIR)
+  endef
+else
+
+  define Host/Prepare
+	mkdir -p $(GCC_BUILD_DIR)
+  endef
+endif
 
 define Host/Configure
 	(cd $(GCC_BUILD_DIR) && rm -f config.cache; \

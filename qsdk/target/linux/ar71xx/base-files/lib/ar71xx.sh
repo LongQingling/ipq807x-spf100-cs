@@ -318,6 +318,9 @@ ar71xx_board_detect() {
 	machine=$(awk 'BEGIN{FS="[ \t]+:[ \t]"} /machine/ {print $2}' /proc/cpuinfo)
 
 	case "$machine" in
+	*"Cloud Core qca9531 repeater v1")
+		name="cloud_core_repeater_v1"
+	;;
 	*"Oolite V1.0")
 		name="oolite"
 		;;
