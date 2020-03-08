@@ -1,0 +1,87 @@
+Index: qca-wifi/cmn_dev/hif/src/ce/ce_assignment.h
+===================================================================
+--- qca-wifi.orig/cmn_dev/hif/src/ce/ce_assignment.h
++++ qca-wifi/cmn_dev/hif/src/ce/ce_assignment.h
+@@ -334,7 +334,7 @@ static struct CE_attr host_ce_config_wla
+ 	{ /* CE7 */ (CE_ATTR_DIAG_FLAGS | CE_ATTR_DISABLE_INTR),
+ 		0, 2, DIAG_TRANSFER_LIMIT, 2, NULL,},
+ };
+-
++#define PIPEDIR_INOUT_H2H 4  /* bidirectional, host to host */
+ static struct CE_pipe_config target_ce_config_wlan[] = {
+ 	/* host->target HTC control and raw streams */
+ 	{ /* CE0 */ 0, PIPEDIR_OUT, 32,  256, CE_ATTR_FLAGS, 0,},
+Index: qca-wifi/dp/dp_link_aggr.c
+===================================================================
+--- qca-wifi.orig/dp/dp_link_aggr.c
++++ qca-wifi/dp/dp_link_aggr.c
+@@ -18,7 +18,8 @@
+ #include <ieee80211_defines.h>
+ #include <osif_private.h>
+ #include <cdp_txrx_ctrl.h>
+-#include <htt_common.h>
++// #include <htt_common.h>
++#include "../cmn_dev/fw_hdr/fw/htt_common.h"
+ #include <dp_extap.h>
+ 
+ void dp_lag_pdev_set_priority(struct wlan_objmgr_pdev *pdev, uint8_t value)
+Index: qca-wifi/os/linux/include/ieee80211_ioctl.h
+===================================================================
+--- qca-wifi.orig/os/linux/include/ieee80211_ioctl.h
++++ qca-wifi/os/linux/include/ieee80211_ioctl.h
+@@ -925,23 +925,23 @@ typedef struct {
+ #define IEEE80211_TWT_FLAG_FLOW_TYPE 0x4
+ #define IEEE80211_TWT_FLAG_PROTECTION 0x8
+ struct ieee80211_twt_add_dialog {
+-    uint32_t dialog_id;
+-    uint32_t wake_intvl_us;
+-    uint32_t wake_intvl_mantis;
+-    uint32_t wake_dura_us;
+-    uint32_t sp_offset_us;
+-    uint32_t twt_cmd;
+-    uint32_t flags;
++    unsigned long dialog_id;
++    unsigned long wake_intvl_us;
++    unsigned long wake_intvl_mantis;
++    unsigned long wake_dura_us;
++    unsigned long sp_offset_us;
++    unsigned long twt_cmd;
++    unsigned long flags;
+ };
+ 
+ struct ieee80211_twt_del_pause_dialog {
+-    uint32_t dialog_id;
++    unsigned long dialog_id;
+ };
+ 
+ struct ieee80211_twt_resume_dialog {
+-    uint32_t dialog_id;
+-    uint32_t sp_offset_us;
+-    uint32_t next_twt_size;
++    unsigned long dialog_id;
++    unsigned long sp_offset_us;
++    unsigned long next_twt_size;
+ };
+ #endif
+ 
+@@ -3034,13 +3034,13 @@ struct event_data_scan {
+ #endif /* QCA_LTEU_SUPPORT */
+ 
+ struct channel_stats {
+-    uint32_t freq;           /* Channel frequency */
+-    uint64_t cycle_cnt;      /* Cumulative sum of cycle cnt delta */
+-    uint64_t tx_frm_cnt;     /* Cumulative sum of tx frame cnt delta */
+-    uint64_t rx_frm_cnt;     /* Cumulative sum of rx frame cnt delta */
+-    uint64_t clear_cnt;      /* Cumulative sum of clear cnt delta */
+-    uint64_t ext_busy_cnt;   /* Cumulative sum of ext busy cnt delta */
+-    uint64_t bss_rx_cnt;     /* Cumulative sum of own bss rx cnt delta */
++    unsigned long freq;           /* Channel frequency */
++    unsigned long long cycle_cnt;      /* Cumulative sum of cycle cnt delta */
++    unsigned long long tx_frm_cnt;     /* Cumulative sum of tx frame cnt delta */
++    unsigned long long rx_frm_cnt;     /* Cumulative sum of rx frame cnt delta */
++    unsigned long long clear_cnt;      /* Cumulative sum of clear cnt delta */
++    unsigned long long ext_busy_cnt;   /* Cumulative sum of ext busy cnt delta */
++    unsigned long long bss_rx_cnt;     /* Cumulative sum of own bss rx cnt delta */
+ };
+ 
+ #endif /* _NET80211_IEEE80211_IOCTL_H_ */
